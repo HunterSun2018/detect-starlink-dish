@@ -1,0 +1,7 @@
+# train/val/test sets
+path: /home/hunter/Projects/RFInsight/yolo/starlink/data
+train: images/train
+val: images/val
+
+names:
+  0: starlink dish
