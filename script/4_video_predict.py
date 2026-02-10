@@ -4,8 +4,8 @@ from collections import deque
 from ultralytics import YOLO
 
 model = YOLO("runs/detect/train7/weights/best.pt")  # 你的 best.pt
-cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live")  # 或 0 / "video.mp4"
-
+# cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp",  cv2.CAP_FFMPEG)  # 或 0 / "video.mp4"
+cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live")
 # 降低延迟：尽量让缓冲变小（不同后端支持不同）
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
@@ -16,8 +16,7 @@ last_time = time.time()
 while True:
     ok, frame = cap.read()
     if not ok:
-        break
-
+        continue
     
 
     # 推理
