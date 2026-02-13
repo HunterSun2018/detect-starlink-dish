@@ -56,7 +56,7 @@ while True:
         for bbox in xyxy:
             x1, y1, x2, y2 = bbox
 
-            # 调用你的单框函数
+            # 调用单框函数
             X, Y, Z = intr.monocular_distance_and_xyz(
                 K0,
                 (x1, y1, x2, y2),
