@@ -25,9 +25,11 @@ real_H_m = 0.4
 
 model = YOLO("runs/detect/train7/weights/best.pt")  # 你的 best.pt
 # cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp",  cv2.CAP_FFMPEG)  # 或 0 / "video.mp4"
-cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live")
+cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt", cv2.CAP_FFMPEG)  # 丢弃损坏帧，降低延迟
 # 降低延迟：尽量让缓冲变小（不同后端支持不同）
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+# cap.set(cv2.CAP_PROP_RTSP_TRANSPORT, cv2.CAP_RTSP_TRANSPORT_TCP) 
+# cap.set(cv2.CAP_PROP_TIMEOUT, 3000) 
 
 # ===== FPS 统计 =====
 fps_window = deque(maxlen=30)   # 30 帧滑动窗口
@@ -39,10 +41,7 @@ while True:
         continue
     
 
-    # 推理
-    #frame_480x640 = cv2.resize(frame, (640, 480))  # (width, height)
-    #results = model.predict(frame_480x640, conf=0.25, iou=0.7, verbose=False)
-    
+    # 推理    
     results = model.predict(frame, imgsz=(640,480), conf=0.25, iou=0.7, verbose=False)
 
     # 画框（ultralytics 自带 plot）
@@ -57,21 +56,36 @@ while True:
         for bbox in xyxy:
             x1, y1, x2, y2 = bbox
 
-            # 调用单框函数
-            X, Y, Z = intr.monocular_distance_and_xyz(
-                K0,
-                (x1, y1, x2, y2),
-                real_H_m,
-                use_bottom_point=True
+            # # 调用单框函数
+            # X, Y, Z = intr.monocular_distance_and_xyz(
+            #     K0,
+            #     (x1, y1, x2, y2),
+            #     real_H_m,
+            #     use_bottom_point=True
+            # )
+            
+            yaw_rad=pitch_rad=roll_rad=0.0            
+            
+            # # ---- Fake camera GPS ----
+            lat0, lon0, alt0 = 37.0, -122.0, 10.0
+                
+            result = locating.monocular_gps_from_bbox(
+                lat0, lon0, alt0,
+                yaw_rad, pitch_rad, roll_rad,
+                K0.fx, K0.fy, K0.cx, K0.cy,                
+                bbox,   # (x1, y1, x2, y2),
+                real_H=real_H_m
             )
-
             # 构造显示文本
-            text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"
+            #text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"
             # text = f"{Z:.2f}m"
+            # text = f"lat={tgt_lat:.2f} lon={tgt_lon:.2f} alt={tgt_alt:.2f}m Z={Z:.2f}m"
+            text = f"lat={result['gps'][0]:.2f} lon={result['gps'][1]:.2f} alt={result['gps'][2]:.2f}m Z={result['Z_m']:.2f}m"
+            
 
             # 文本位置（框左上角上方）
             tx = int(x1)
-            ty = int(y1) - 48
+            ty = int(y1) - 50  # 往上挪一点，避免遮挡框
 
             # 防止文字超出图像
             if ty < 20:
