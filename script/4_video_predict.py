@@ -3,6 +3,7 @@ import time
 from collections import deque
 from ultralytics import YOLO
 import Intrinsics as intr
+import locating
 
  # --- given camera info ---
 f_mm = 2.8
@@ -65,8 +66,8 @@ while True:
             )
 
             # 构造显示文本
-            # text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"
-            text = f"{Z:.2f}m"
+            text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"
+            # text = f"{Z:.2f}m"
 
             # 文本位置（框左上角上方）
             tx = int(x1)
