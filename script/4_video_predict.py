@@ -24,8 +24,8 @@ real_H_m = 0.4
 
 
 model = YOLO("runs/detect/train7/weights/best.pt")  # 你的 best.pt
-# cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp",  cv2.CAP_FFMPEG)  # 或 0 / "video.mp4"
-cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt", cv2.CAP_FFMPEG)  # 丢弃损坏帧，降低延迟
+cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp",  cv2.CAP_FFMPEG)  # 或 0 / "video.mp4"
+# cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt", cv2.CAP_FFMPEG)  # 丢弃损坏帧，降低延迟
 # 降低延迟：尽量让缓冲变小（不同后端支持不同）
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 # cap.set(cv2.CAP_PROP_RTSP_TRANSPORT, cv2.CAP_RTSP_TRANSPORT_TCP) 
@@ -64,6 +64,7 @@ while True:
             #     use_bottom_point=True
             # )
             
+            # 你可以替换成实际的姿态数据NEU，这里假设相机水平放置，没有旋转
             yaw_rad=pitch_rad=roll_rad=0.0            
             
             # # ---- Fake camera GPS ----
@@ -76,10 +77,9 @@ while True:
                 bbox,   # (x1, y1, x2, y2),
                 real_H=real_H_m
             )
+            
             # 构造显示文本
-            #text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"
-            # text = f"{Z:.2f}m"
-            # text = f"lat={tgt_lat:.2f} lon={tgt_lon:.2f} alt={tgt_alt:.2f}m Z={Z:.2f}m"
+            #text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"            
             text = f"lat={result['gps'][0]:.2f} lon={result['gps'][1]:.2f} alt={result['gps'][2]:.2f}m Z={result['Z_m']:.2f}m"
             
 
