@@ -60,10 +60,17 @@ def Receive():
         if terminated:  
             break
         
+        if(q.qsize()>10):  # 队列积压过多，丢帧
+            print("Warning: frame queue size =", q.qsize())
+            time.sleep(0.1)  # 等待消费者消化一下
+            continue
+        
         ret, frame = cap.read()
         q.put(frame)
              
     cap.release()
+    
+    print("stop Reveive")
     
 #
 #   显示线程：负责从队列获取视频帧，进行 YOLO 推理和定位计算，并显示结果
@@ -106,7 +113,15 @@ def Display():
                     #     (x1, y1, x2, y2),
                     #     real_H_m,
                     #     use_bottom_point=True
-                    # )                    
+                    # ) 
+                    # result = locating.monocular_gps_from_bbox(
+                    #     lat0, lon0, alt0,
+                    #     yaw_rad, pitch_rad, roll_rad,
+                    #     K0.fx, K0.fy, K0.cx, K0.cy,                
+                    #     bbox,   # (x1, y1, x2, y2),
+                    #     real_H=real_H_m
+                    # )
+                                       
                     with lock:
                         lat0_copy, lon0_copy, alt0_copy = lat0, lon0, alt0
                         yaw_rad_copy, pitch_rad_copy, roll_rad_copy = yaw_rad, pitch_rad, roll_rad
@@ -146,16 +161,10 @@ def Display():
                     )
 
                     # 写文字
-                    cv2.putText(
-                        annotated,
-                        text,
-                        (tx, ty),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1.0,
-                        (0, 255, 0),
-                        1,
-                        cv2.LINE_AA
-                    )
+                    cv2.putText(annotated, text,
+                        (tx, ty), cv2.FONT_HERSHEY_SIMPLEX,
+                        1.0, (0, 255, 0), 1,
+                        cv2.LINE_AA)
 
             # ===== FPS 计算 =====
             now = time.time()
@@ -180,11 +189,10 @@ def Display():
             )            
 
             cv2.imshow("YOLO Stream", annotated)
-            
     
-    print("Release cv2 resources")
+    cv2.destroyAllWindows()
     
-    cv2.destroyAllWindows()    
+    print("Stop Displaying")
 
 #
 #   UDP 服务器回调接口：负责接收 GPS 和姿态数据更新
