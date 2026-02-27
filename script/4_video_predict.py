@@ -27,13 +27,16 @@ print("K0:", K0)
 W1, H1 = 640, 480
 K1 = intr.scale_intrinsics(K0, W1, H1)
 
-# Starlink size
+# the  real size of Starlink dish 
 real_H_m = 0.4
 
 #  ---- Fake camera GPS and attitude (replace with real data from UDP) ----
 lat0, lon0, alt0 = 37.0, -122.0, 10.0
 # 替换成实际的姿态数据，这里假设相机水平放置，没有旋转
 yaw_rad=pitch_rad=roll_rad=0.0
+
+#  线程间的锁，保护共享的 GPS 和姿态数据
+lock = threading.Lock()
 
 #  加载 YOLO 模型
 model = YOLO("runs/detect/train7/weights/best.pt")  # best.pt
@@ -88,8 +91,7 @@ def Display():
 
             # 画框（ultralytics 自带 plot）
             annotated = results[0].plot()
-            
-            # X, Y, Z = intr.monocular_distance_and_xyz(K1, results[0], real_H_m, use_bottom_point=True)
+                        
             boxes = results[0].boxes
             if boxes is not None and len(boxes) > 0:
                 
@@ -105,10 +107,13 @@ def Display():
                     #     real_H_m,
                     #     use_bottom_point=True
                     # )                    
+                    with lock:
+                        lat0_copy, lon0_copy, alt0_copy = lat0, lon0, alt0
+                        yaw_rad_copy, pitch_rad_copy, roll_rad_copy = yaw_rad, pitch_rad, roll_rad
                         
                     result = locating.monocular_gps_from_bbox(
-                        lat0, lon0, alt0,
-                        yaw_rad, pitch_rad, roll_rad,
+                        lat0_copy, lon0_copy, alt0_copy,
+                        yaw_rad_copy, pitch_rad_copy, roll_rad_copy,
                         K0.fx, K0.fy, K0.cx, K0.cy,                
                         bbox,   # (x1, y1, x2, y2),
                         real_H=real_H_m
@@ -172,10 +177,7 @@ def Display():
                 (0, 255, 0),
                 2,
                 cv2.LINE_AA
-            )
-            
-            # x = results[0].x
-            # y = results[0].y - 10
+            )            
 
             cv2.imshow("YOLO Stream", annotated)
             
@@ -184,15 +186,19 @@ def Display():
     
     cv2.destroyAllWindows()    
 
-def onUpdatePos(msg):
+#
+#   UDP 服务器回调接口：负责接收 GPS 和姿态数据更新
+#
+def onUpdatePose(msg):
     global lat0, lon0, alt0, yaw_rad, pitch_rad, roll_rad
     
-    lat0 = msg['lat0']
-    lon0 = msg['lon0']
-    alt0 = msg['alt0']
-    yaw_rad = msg['yaw_rad']
-    pitch_rad = msg['pitch_rad']
-    roll_rad = msg['roll_rad']
+    with lock:
+        lat0 = msg['lat0']
+        lon0 = msg['lon0']
+        alt0 = msg['alt0']
+        yaw_rad = msg['yaw_rad']
+        pitch_rad = msg['pitch_rad']
+        roll_rad = msg['roll_rad']
 
     print(f"Received position update: lat={lat0:.2f}, lon={lon0:.2f}, alt={alt0:.2f}, yaw={yaw_rad:.2f}, pitch={pitch_rad:.2f}, roll={roll_rad:.2f}")
         
@@ -203,7 +209,7 @@ if __name__=='__main__':
         
     p1 = threading.Thread(target=Receive)
     p2 = threading.Thread(target=Display)
-    p3 = threading.Thread(target=server.run_udp_server, kwargs={"bind_ip": "0.0.0.0", "port": 9000, "onUpdatePos": onUpdatePos})
+    p3 = threading.Thread(target=server.run_udp_server, kwargs={"bind_ip": "0.0.0.0", "port": 9000, "onUpdatePos": onUpdatePose})
     
     p1.start()
     p2.start()
