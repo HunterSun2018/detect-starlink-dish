@@ -1,16 +1,22 @@
 # scripts/3_predict.py
 from __future__ import annotations
 from pathlib import Path
+import sys
 from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-BEST_PT = PROJECT_ROOT / "runs" / "detect" / "train4" / "weights" / "best.pt"
+BEST_PT = PROJECT_ROOT / "runs" / "detect" / "train8" / "weights" / "best.pt"
 
 def main():
     model = YOLO(str(BEST_PT))
 
-    # 你可以换成任意图片路径/目录
-    sample = PROJECT_ROOT / "data" / "camera002.jpg"
+    arguments = sys.argv[1:]
+    if len(arguments) > 0:
+        sample = arguments[0]
+    else:
+        # 你可以换成任意图片路径/目录
+        sample = PROJECT_ROOT / "data" / "camera002.jpg"
+    
     results = model.predict(
         source=str(sample),
         imgsz=640,

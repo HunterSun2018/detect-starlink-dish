@@ -39,12 +39,14 @@ yaw_rad=pitch_rad=roll_rad=0.0
 lock = threading.Lock()
 
 #  加载 YOLO 模型
-model = YOLO("runs/detect/train7/weights/best.pt")  # best.pt
+model = YOLO("runs/detect/train8/weights/best.pt")  # best.pt
 
 # 线程间的终止信号
 terminated = False
 
-stream_url = "rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp"
+# 视频流地址
+stream_url = "rtsp://192.168.10.203:8554/main.264"
+# stream_url = "rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp"
 #stream_url = "rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt"  # 丢弃损坏帧，降低延迟
 
 #
@@ -64,7 +66,7 @@ def Receive():
         
         if(q.qsize()>10):  # 队列积压过多，丢帧
             # print("Warning: frame queue size =", q.qsize())
-            time.sleep(0.01)  # 等待消费者消化一下
+            time.sleep(0.01)  # 等待Receiver处理
             continue
         
         ret, frame = cap.read()        
