@@ -39,7 +39,7 @@ yaw_rad=pitch_rad=roll_rad=0.0
 lock = threading.Lock()
 
 #  加载 YOLO 模型
-model = YOLO("runs/detect/train8/weights/best.pt")  # best.pt
+model = YOLO("runs/detect/train9/weights/best.pt")  # best.pt
 
 # 线程间的终止信号
 terminated = False
@@ -95,6 +95,12 @@ def Display():
     fps_window = deque(maxlen=30)   # 30 帧滑动窗口
     last_time = time.time()
     
+    # 创建一个可调整大小的窗口
+    window_title = "YOLO Stream"
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+    # 设置窗口大小为 1024x768
+    cv2.resizeWindow(window_title, 1270, 768)
+
     while True:
         
         global terminated        
@@ -200,8 +206,8 @@ def Display():
                 2,
                 cv2.LINE_AA
             )            
-
-            cv2.imshow("YOLO Stream", annotated)
+            
+            cv2.imshow(window_title, annotated)
     
     cv2.destroyAllWindows()
     
