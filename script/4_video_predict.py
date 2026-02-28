@@ -38,6 +38,9 @@ yaw_rad=pitch_rad=roll_rad=0.0
 #  线程间的锁，保护共享的 GPS 和姿态数据
 lock = threading.Lock()
 
+# starlink dish position in GPS coordinates, will be updated by UDP server
+sld_gps = (0.0, 0.0, 0.0)  # (lat, lon, alt)
+
 #  加载 YOLO 模型
 model = YOLO("runs/detect/train9/weights/best.pt")  # best.pt
 
@@ -132,14 +135,7 @@ def Display():
                     #     (x1, y1, x2, y2),
                     #     real_H_m,
                     #     use_bottom_point=True
-                    # ) 
-                    # result = locating.monocular_gps_from_bbox(
-                    #     lat0, lon0, alt0,
-                    #     yaw_rad, pitch_rad, roll_rad,
-                    #     K0.fx, K0.fy, K0.cx, K0.cy,                
-                    #     bbox,   # (x1, y1, x2, y2),
-                    #     real_H=real_H_m
-                    # )
+                    # )                     
                                        
                     with lock:
                         lat0_copy, lon0_copy, alt0_copy = lat0, lon0, alt0
@@ -153,8 +149,11 @@ def Display():
                         real_H=real_H_m
                     )
                     
+                    # 更新全局 Starlink 位置
+                    global sld_gps
+                    sld_gps = result['gps']           
+                    
                     # 构造显示文本
-                    #text = f"X={X:.2f}m Y={Y:.2f}m Z={Z:.2f}m"            
                     text = f"lat={result['gps'][0]:.2f} lon={result['gps'][1]:.2f} alt={result['gps'][2]:.2f}m Z={result['Z_m']:.2f}m"
                     
 
@@ -227,8 +226,9 @@ def onUpdatePose(msg):
         pitch_rad = msg['pitch_rad']
         roll_rad = msg['roll_rad']
 
-    print(f"Received position update: lat={lat0:.2f}, lon={lon0:.2f}, alt={alt0:.2f}, yaw={yaw_rad:.2f}, pitch={pitch_rad:.2f}, roll={roll_rad:.2f}")
-        
+    # print(f"Received position update: lat={lat0:.2f}, lon={lon0:.2f}, alt={alt0:.2f}, yaw={yaw_rad:.2f}, pitch={pitch_rad:.2f}, roll={roll_rad:.2f}")
+    return sld_gps  # 返回当前 Starlink 位置，供 UDP 服务器使用
+    
 #
 #   主线程：启动接收和显示线程，并等待它们结束
 #            

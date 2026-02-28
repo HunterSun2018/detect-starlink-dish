@@ -71,10 +71,14 @@ def run_udp_server(bind_ip: str = "0.0.0.0", port: int = 9000, onUpdatePos=None)
                 f"yaw={msg['yaw_rad']:.6f} pitch={msg['pitch_rad']:.6f} roll={msg['roll_rad']:.6f}"
             )
             if onUpdatePos is not None:
-                onUpdatePos(msg)
+                gps = onUpdatePos(msg)
                 
             # 回一个 ACK（可选）
-            ack = {"ok": True, "ts": ts}
+            if gps:
+                ack = {"ok": True, "ts": ts, "lat": gps[0], "lon": gps[1], "alt": gps[2]}
+            else:
+                ack = {"ok": True, "ts": ts}
+            
             sock.sendto(json.dumps(ack).encode("utf-8"), addr)
 
         except Exception as e:
