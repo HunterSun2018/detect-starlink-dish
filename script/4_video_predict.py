@@ -44,28 +44,39 @@ model = YOLO("runs/detect/train7/weights/best.pt")  # best.pt
 # 线程间的终止信号
 terminated = False
 
+stream_url = "rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp"
+#stream_url = "rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt"  # 丢弃损坏帧，降低延迟
+
 #
 #   接收线程：负责从 RTSP 流读取视频帧，并放入队列
 #    
 def Receive():
     print("start Reveive")
     
-    cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp",  cv2.CAP_FFMPEG)
-    # cap = cv2.VideoCapture("rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt", cv2.CAP_FFMPEG)  # 丢弃损坏帧，降低延迟
+    cap = cv2.VideoCapture(stream_url,  cv2.CAP_FFMPEG)    
+    
     # 降低延迟：尽量让缓冲变小（不同后端支持不同）
-    # cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-
-    ret = True
-    while ret:
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    
+    while True:
         if terminated:  
             break
         
         if(q.qsize()>10):  # 队列积压过多，丢帧
-            print("Warning: frame queue size =", q.qsize())
-            time.sleep(0.1)  # 等待消费者消化一下
+            # print("Warning: frame queue size =", q.qsize())
+            time.sleep(0.01)  # 等待消费者消化一下
             continue
         
-        ret, frame = cap.read()
+        ret, frame = cap.read()        
+        if not ret:
+            print("Failed to read frame from RTSP stream, retrying...")
+            
+            cap.release()
+            cap = cv2.VideoCapture(stream_url,  cv2.CAP_FFMPEG)
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            
+            continue
+        
         q.put(frame)
              
     cap.release()
