@@ -207,6 +207,7 @@ def Display():
             )            
             
             cv2.imshow(window_title, annotated)
+            
     
     cv2.destroyAllWindows()
     
