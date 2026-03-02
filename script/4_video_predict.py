@@ -42,14 +42,14 @@ lock = threading.Lock()
 sld_gps = (0.0, 0.0, 0.0)  # (lat, lon, alt)
 
 #  加载 YOLO 模型
-model = YOLO("runs/detect/train9/weights/best.pt")  # best.pt
+model = YOLO("runs/detect/train10/weights/best.pt")  # best.pt
 
 # 线程间的终止信号
 terminated = False
 
 # 视频流地址
-stream_url = "rtsp://192.168.10.203:8554/main.264"
-# stream_url = "rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp"
+# stream_url = "rtsp://192.168.10.203:8554/main.264"
+stream_url = "rtsp://admin:admin@192.168.0.15:554/live?rtsp_transport=tcp"
 #stream_url = "rtsp://admin:admin@192.168.0.15:554/live"+ "?fflags=discardcorrupt"  # 丢弃损坏帧，降低延迟
 
 #

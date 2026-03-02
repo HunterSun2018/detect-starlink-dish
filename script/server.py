@@ -53,7 +53,7 @@ def parse_payload(data: bytes) -> Dict[str, float]:
 
 def run_udp_server(bind_ip: str = "0.0.0.0", port: int = 9000, onUpdatePos=None) -> None:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # 允许快速重启（对 UDP 影响不大，但习惯性打开）
+    # 允许快速重启
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     sock.bind((bind_ip, port))
@@ -74,7 +74,7 @@ def run_udp_server(bind_ip: str = "0.0.0.0", port: int = 9000, onUpdatePos=None)
                 gps = onUpdatePos(msg)
                 
             # 回一个 ACK（可选）
-            if gps:
+            if gps is not None:
                 ack = {"ok": True, "ts": ts, "lat": gps[0], "lon": gps[1], "alt": gps[2]}
             else:
                 ack = {"ok": True, "ts": ts}
